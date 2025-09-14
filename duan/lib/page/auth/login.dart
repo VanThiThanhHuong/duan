@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> login() async {
+    setState(() => isLoading = true);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // Nếu đăng nhập thành công → chuyển sang HomePage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Login failed")),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,69 +56,46 @@ class LoginPage extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo
-                  Image.asset(
-                    "lib/image/logo.png",
-                    width: 120,
-                    height: 120,
-                  ),
+                  Image.asset("lib/image/logo.png", width: 120, height: 120),
                   const SizedBox(height: 25),
-
-                  // Welcome text
                   const Text(
                     "Welcome Back!",
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Sign in to continue your language journey",
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
-                    textAlign: TextAlign.center,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
                   ),
                   const SizedBox(height: 35),
 
                   // Email
                   TextField(
+                    controller: emailController,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.email_outlined),
                       hintText: "your.email@example.com",
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
                       ),
-                      suffixText: "Forgot?",
-                      suffixStyle: const TextStyle(color: Colors.blue),
                     ),
                   ),
                   const SizedBox(height: 18),
 
                   // Password
                   TextField(
+                    controller: passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.lock_outline),
                       hintText: "Password",
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.visibility_off),
-                        onPressed: () {},
                       ),
                     ),
                   ),
@@ -96,46 +106,25 @@ class LoginPage extends StatelessWidget {
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: login action
-                      },
+                      onPressed: isLoading ? null : login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        elevation: 6,
                       ),
-                      child: const Text(
-                        "LOG IN",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              "LOG IN",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
                     ),
-                  ),
-                  const SizedBox(height: 25),
-
-                  // Sign up text
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don’t have an account? "),
-                      GestureDetector(
-                        onTap: () {
-                          // TODO: chuyển sang Sign Up
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    ],
                   ),
                 ],
               ),
