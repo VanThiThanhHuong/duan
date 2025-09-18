@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../home_page.dart';
+import '../layout/layout_main.dart';
 
 class UserInfoPage extends StatefulWidget {
   final String uid;
@@ -28,7 +28,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const MainPage()),
         (route) => false,
       );
     } catch (e) {
