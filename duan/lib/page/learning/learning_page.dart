@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
-import 'japan/japanese_test_page.dart'; // import trang test
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'japan/japanese_test_page.dart';
+import 'japan/level.dart';
 
 class LearningPage extends StatelessWidget {
   const LearningPage({super.key});
+
+  Future<int?> _getSavedLevel() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (doc.exists && doc.data()!.containsKey('japanese_level')) {
+      return doc['japanese_level'] as int;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,31 +30,31 @@ class LearningPage extends StatelessWidget {
         "name": "Japanese",
         "description": "こんにちは!\n一緒に日本語を学びましょう。",
         "gradient": [
-          Color.fromARGB(255, 249, 160, 163),
-          Color(0xFFfad0c4)
+          const Color.fromARGB(255, 249, 160, 163),
+          const Color(0xFFfad0c4)
         ],
         "lessons": "14 lessons • Trending",
-        "image": "lib/image/logo.png", // ảnh núi Phú Sĩ
+        "image": "lib/image/logo.png",
       },
       {
         "name": "Korean",
         "description": "안녕하세요!\n재미있게 한국어를 배워요。",
         "gradient": [
-          Color.fromARGB(255, 185, 163, 238),
-          Color(0xFFfbc2eb)
+          const Color.fromARGB(255, 185, 163, 238),
+          const Color(0xFFfbc2eb)
         ],
         "lessons": "23 lessons • New course",
-        "image": "lib/image/logo.png", // ảnh tháp Namsan
+        "image": "lib/image/logo.png",
       },
       {
         "name": "Chinese",
         "description": "你好!\n一起学习中文吧。",
         "gradient": [
-          Color.fromARGB(255, 172, 243, 198),
-          Color.fromARGB(255, 161, 215, 241)
+          const Color.fromARGB(255, 172, 243, 198),
+          const Color.fromARGB(255, 161, 215, 241)
         ],
         "lessons": "20 lessons • Popular",
-        "image": "lib/image/logo.png", // ảnh Vạn Lý Trường Thành
+        "image": "lib/image/logo.png",
       },
     ];
 
@@ -128,14 +147,27 @@ class LearningPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               ElevatedButton(
-                                onPressed: () {
+                                onPressed: () async {
                                   if (lang["name"] == "Japanese") {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const JapaneseTestPage(),
-                                      ),
-                                    );
+                                    final savedLevel = await _getSavedLevel();
+                                    if (savedLevel != null) {
+                                      // Đã làm test → vào thẳng course
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              LevelSelectionPage(unlockedLevel: savedLevel),
+                                        ),
+                                      );
+                                    } else {
+                                      // Chưa làm test → làm test trước
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const JapaneseTestPage(),
+                                        ),
+                                      );
+                                    }
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

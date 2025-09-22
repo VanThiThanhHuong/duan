@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'level.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'level.dart'; // file LevelSelectionPage
+
 class JapaneseTestPage extends StatefulWidget {
   const JapaneseTestPage({super.key});
 
@@ -31,6 +35,7 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
     Color(0xFFfad0c4),
   ];
 
+  /// Nộp bài kiểm tra
   void submit() {
     int tempScore = 0;
     for (int i = 0; i < questions.length; i++) {
@@ -44,6 +49,7 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
     });
   }
 
+  /// Xác định level theo điểm số
   int getLevelIndex(int score) {
     if (score <= 3) return 1; // Beginner
     if (score <= 6) return 2; // N5
@@ -51,11 +57,26 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
     return 4; // N3
   }
 
+  /// Trả về text mô tả level
   String getLevelText(int score) {
     if (score <= 3) return "Beginner – Cần học lại từ đầu (dưới N5)";
     if (score <= 6) return "Elementary – Biết cơ bản (JLPT N5)";
     if (score <= 8) return "Pre-Intermediate – Nắm căn bản (JLPT N4)";
     return "Intermediate – Nền tảng vững (JLPT N3)";
+  }
+
+  /// Lưu trình độ vào Firestore
+  Future<void> saveUnlockedLevel(int unlockedLevel) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection("users").doc(uid).set({
+          "japanese_level": unlockedLevel,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint("Lỗi khi lưu unlockedLevel: $e");
+    }
   }
 
   @override
@@ -75,7 +96,7 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress bar
+            // Thanh progress
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(12),
@@ -184,7 +205,7 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
                       child: const Text("Nộp bài"),
                     ),
 
-                  // Feedback
+                  // Kết quả sau khi nộp
                   if (submitted) ...[
                     Card(
                       elevation: 6,
@@ -220,15 +241,19 @@ class _JapaneseTestPageState extends State<JapaneseTestPage> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         int unlockedLevel = getLevelIndex(score);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                LevelSelectionPage(unlockedLevel: unlockedLevel),
-                          ),
-                        );
+                        await saveUnlockedLevel(unlockedLevel);
+
+                        if (context.mounted) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  LevelSelectionPage(unlockedLevel: unlockedLevel),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.school),
                       label: const Text("Bắt đầu học"),
