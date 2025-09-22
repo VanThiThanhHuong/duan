@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'course_detail_page.dart';
 
 class LevelSelectionPage extends StatefulWidget {
   final int? unlockedLevel;
@@ -101,22 +102,33 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 const Text(
                   "語語てとる",
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
-                const Text("Select a course to begin",
-                    style: TextStyle(color: Colors.grey)),
+                const Text(
+                  "Select a course to begin",
+                  style: TextStyle(color: Colors.grey),
+                ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Level $unlockedLevel",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text("$xp XP",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      "Level $unlockedLevel",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      "$xp XP",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -163,11 +175,13 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(course["icon"],
-                          size: 50,
-                          color: isUnlocked
-                              ? Colors.orange
-                              : Colors.grey.shade400),
+                      Icon(
+                        course["icon"],
+                        size: 50,
+                        color: isUnlocked
+                            ? Colors.orange
+                            : Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 10),
                       Text(
                         course["title"],
@@ -198,20 +212,63 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                       if (isUnlocked)
                         ElevatedButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content:
-                                    Text("Bắt đầu ${course['title']}")));
+                            List<String> lessons = [];
+
+                            if (course["title"] == "Beginner") {
+                              lessons = [
+                                "Hiragana (あ–お)",
+                                "Hiragana (か–こ)",
+                                "Katakana (ア–オ)",
+                                "Chào hỏi cơ bản",
+                                "Số đếm 1–10",
+                                "Thời gian & Ngày tháng",
+                                "Từ vựng gia đình",
+                                "Ôn tập + Mini test",
+                              ];
+                            } else if (course["title"] == "Elementary") {
+                              lessons = [
+                                "Kanji cơ bản (日, 月, 山, 川)",
+                                "Từ vựng lớp học",
+                                "Giới thiệu bản thân",
+                                "Động từ nhóm 1 – ます形",
+                                "Mẫu câu hỏi: ～ですか",
+                                "Thì hiện tại & quá khứ",
+                                "Số đếm nâng cao & tuổi",
+                                "Từ vựng động vật",
+                                "Kanji về con người (人, 女, 男, 子)",
+                                "Từ vựng nghề nghiệp",
+                                "Mẫu câu sở hữu: ～の～",
+                                "Địa điểm: 学校, 銀行, 駅",
+                                "Ngữ pháp so sánh cơ bản",
+                                "Thời gian trong ngày",
+                                "Động từ nhóm 2 & 3",
+                                "Thể từ điển (辞書形)",
+                                "Mẫu câu ～たいです (muốn làm)",
+                                "Kanji ngày tháng (年, 時, 分)",
+                                "Đọc đoạn văn ngắn",
+                                "Ôn tập + Test N5",
+                              ];
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CourseDetailPage(
+                                    courseTitle: course["title"],
+                                    lessons: lessons,
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30)),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
                           child: const Text("Start"),
                         )
                       else
-                        const Icon(Icons.lock,
-                            color: Colors.grey, size: 28),
+                        const Icon(Icons.lock, color: Colors.grey, size: 28),
                     ],
                   ),
                 );
