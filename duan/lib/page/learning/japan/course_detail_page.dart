@@ -27,19 +27,25 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   Widget build(BuildContext context) {
     double progress = completed.where((e) => e).length / widget.lessons.length;
 
+    // 🔸 Màu cam chủ đạo
+    const Color primaryColor = Color(0xFFFF9800); // cam tươi
+    const Color lightOrange = Color(0xFFFFE0B2);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: CustomScrollView(
         slivers: [
-          // --- Header hiện đại ---
+          // --- Header ---
           SliverAppBar(
             pinned: true,
             expandedHeight: 200,
-            backgroundColor: const Color(0xFF6C63FF),
+            backgroundColor: primaryColor,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(widget.courseTitle,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white)),
+              title: Text(
+                widget.courseTitle,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white),
+              ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -74,18 +80,18 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       value: progress,
                       minHeight: 10,
                       backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation(
-                        Color(0xFF6C63FF), // tím chủ đạo
-                      ),
+                      valueColor:
+                          const AlwaysStoppedAnimation(primaryColor),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Tiến độ: ${(progress * 100).toStringAsFixed(0)}%",
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: Color(0xFF333333)),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Color(0xFF333333),
+                    ),
                   ),
                 ],
               ),
@@ -97,6 +103,10 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 bool isDone = completed[index];
+
+                // 🔸 Cho phép học nếu là bài đầu tiên hoặc bài trước đã hoàn thành
+                bool canLearn = index == 0 || completed[index - 1];
+
                 return Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -117,10 +127,18 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     leading: CircleAvatar(
                       radius: 24,
                       backgroundColor:
-                          isDone ? Colors.green[100] : Colors.purple[100],
+                          isDone ? Colors.green[100] : lightOrange,
                       child: Icon(
-                        isDone ? Icons.check : Icons.menu_book_rounded,
-                        color: isDone ? Colors.green[700] : Colors.purple[700],
+                        isDone
+                            ? Icons.check_circle
+                            : (canLearn
+                                ? Icons.menu_book_rounded
+                                : Icons.lock),
+                        color: isDone
+                            ? Colors.green[700]
+                            : (canLearn
+                                ? primaryColor
+                                : Colors.grey[500]),
                       ),
                     ),
                     title: Text(
@@ -134,31 +152,40 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       ),
                     ),
                     subtitle: Text(
-                      isDone ? "Đã hoàn thành" : "Chưa học",
+                      isDone
+                          ? "Đã hoàn thành"
+                          : (canLearn ? "Chưa học" : "Khoá - cần hoàn thành bài trước"),
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDone ? Colors.green[600] : Colors.grey[500],
+                        color: isDone
+                            ? Colors.green[600]
+                            : (canLearn
+                                ? Colors.grey[500]
+                                : Colors.red[400]),
                       ),
                     ),
                     trailing: isDone
                         ? const Icon(Icons.verified_rounded,
                             color: Colors.green, size: 28)
-                        : FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF6C63FF),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 8),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                completed[index] = true;
-                              });
-                            },
-                            child: const Text("Học",
-                                style: TextStyle(color: Colors.white)),
-                          ),
+                        : (canLearn
+                            ? FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 8),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    completed[index] = true;
+                                  });
+                                },
+                                child: const Text("Học",
+                                    style: TextStyle(color: Colors.white)),
+                              )
+                            : const Icon(Icons.lock,
+                                color: Colors.grey, size: 28)),
                   ),
                 );
               },

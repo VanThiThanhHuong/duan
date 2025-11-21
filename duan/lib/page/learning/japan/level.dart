@@ -13,7 +13,7 @@ class LevelSelectionPage extends StatefulWidget {
 
 class _LevelSelectionPageState extends State<LevelSelectionPage> {
   int unlockedLevel = 1;
-  int xp = 0; // 🔹 bạn có thể lưu XP trong Firestore để sync
+  int xp = 0;
 
   final List<Map<String, dynamic>> courses = const [
     {
@@ -261,6 +261,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
