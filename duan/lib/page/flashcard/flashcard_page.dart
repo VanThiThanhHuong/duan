@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../data/flashcard_sets.dart';
 import '../../models/flashcard_set.dart';
 import '../../models/vocabulary.dart';
 import 'flashcard_set_detail.dart';
@@ -56,56 +55,17 @@ class _FlashcardPageState extends State<FlashcardPage>
               ],
             ),
           ),
+
           // TAB CONTENT
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Tab cộng đồng
-                _buildFlashcardList(communityFlashcardSets),
+                // Cộng đồng (Firestore)
+                _buildCommunityFlashcards(),
 
-                // Tab cá nhân (Firestore)
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('flashcards')
-                      .doc(FirebaseAuth.instance.currentUser?.uid)
-                      .collection('userFlashcards')
-                      .orderBy('createdAt', descending: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text("Chưa có bộ flashcard nào"),
-                      );
-                    }
-
-                    final userFlashcards = snapshot.data!.docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return FlashcardSet(
-                        id: doc.id,
-                        title: data['title'] ?? 'Không có tiêu đề',
-                        description: data['description'] ?? '',
-                        vocabList:
-                            (data['vocabList'] as List<dynamic>?)
-                                ?.map(
-                                  (v) => Vocabulary(
-                                    word: v['word'] ?? '',
-                                    romaji: v['romaji'] ?? '',
-                                    meaning: v['meaning'] ?? '',
-                                  ),
-                                )
-                                .toList() ??
-                            [],
-                        participants: data['participants'] ?? 1,
-                      );
-                    }).toList();
-
-                    return _buildFlashcardList(userFlashcards);
-                  },
-                ),
+                // Cá nhân (Firestore)
+                _buildPersonalFlashcards(),
               ],
             ),
           ),
@@ -114,9 +74,92 @@ class _FlashcardPageState extends State<FlashcardPage>
     );
   }
 
+  // ================== TAB CỘNG ĐỒNG ==================
+  Widget _buildCommunityFlashcards() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('flashcard_sets')
+          .where('isCommunity', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("Chưa có bộ cộng đồng nào"));
+        }
+
+        final communitySets = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return FlashcardSet(
+            id: doc.id,
+            title: data['title'] ?? '',
+            description: data['description'] ?? '',
+            vocabList: (data['vocabList'] as List<dynamic>? ?? [])
+                .map((v) => Vocabulary(
+                      word: v['word'] ?? '',
+                      romaji: v['romaji'] ?? '',
+                      meaning: v['meaning'] ?? '',
+                    ))
+                .toList(),
+            participants: data['participants'] ?? 1,
+          );
+        }).toList();
+
+        return _buildFlashcardList(communitySets);
+      },
+    );
+  }
+
+  // ================== TAB CÁ NHÂN ==================
+  Widget _buildPersonalFlashcards() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('flashcards')
+          .doc(userId)
+          .collection('userFlashcards')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("Chưa có bộ flashcard nào"));
+        }
+
+        final userSets = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return FlashcardSet(
+            id: doc.id,
+            title: data['title'] ?? 'Không có tiêu đề',
+            description: data['description'] ?? '',
+            vocabList: (data['vocabList'] as List<dynamic>? ?? [])
+                .map(
+                  (v) => Vocabulary(
+                    word: v['word'] ?? '',
+                    romaji: v['romaji'] ?? '',
+                    meaning: v['meaning'] ?? '',
+                  ),
+                )
+                .toList(),
+            participants: data['participants'] ?? 1,
+          );
+        }).toList();
+
+        return _buildFlashcardList(userSets);
+      },
+    );
+  }
+
+  // ================== HIỂN THỊ LIST ==================
   Widget _buildFlashcardList(List<FlashcardSet> sets) {
     if (sets.isEmpty) {
-      return const Center(child: Text("Chưa có bộ flashcard nào"));
+      return const Center(child: Text("Không có dữ liệu"));
     }
 
     return ListView.builder(
@@ -169,6 +212,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                     ),
                   ),
                   const SizedBox(width: 16),
+
                   // Text
                   Expanded(
                     child: Column(
@@ -190,6 +234,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                           ),
                         ),
                         const SizedBox(height: 8),
+
                         Row(
                           children: [
                             Icon(
@@ -199,7 +244,9 @@ class _FlashcardPageState extends State<FlashcardPage>
                             ),
                             const SizedBox(width: 6),
                             Text("${set.vocabList.length} từ"),
+
                             const SizedBox(width: 16),
+
                             Icon(
                               Icons.group,
                               size: 18,
@@ -212,6 +259,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                       ],
                     ),
                   ),
+
                   const Icon(
                     Icons.arrow_forward_ios,
                     size: 18,
@@ -226,6 +274,7 @@ class _FlashcardPageState extends State<FlashcardPage>
     );
   }
 
+  // ================== TẠO FLASHCARD ==================
   void showAddFlashcardSheet(BuildContext context) {
     String title = '';
     String description = '';
@@ -261,6 +310,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                     ),
                   ),
                   const SizedBox(height: 12),
+
                   const Text(
                     "Tạo Flashcard mới",
                     style: TextStyle(
@@ -269,8 +319,9 @@ class _FlashcardPageState extends State<FlashcardPage>
                       color: Colors.black87,
                     ),
                   ),
+
                   const SizedBox(height: 20),
-                  // Tiêu đề
+
                   // Tiêu đề
                   TextField(
                     decoration: InputDecoration(
@@ -280,16 +331,16 @@ class _FlashcardPageState extends State<FlashcardPage>
                       fillColor: Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none, // bình thường không viền
+                        borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none, // bình thường không viền
+                        borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: Colors.orange.shade200, // viền khi focus
+                          color: Colors.orange.shade200,
                           width: 2,
                         ),
                       ),
@@ -317,7 +368,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: Colors.orange.shade200, // viền khi focus
+                          color: Colors.orange.shade200,
                           width: 2,
                         ),
                       ),
@@ -326,7 +377,8 @@ class _FlashcardPageState extends State<FlashcardPage>
                   ),
 
                   const SizedBox(height: 20),
-                  // Lưu
+
+                  // LƯU
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -339,13 +391,13 @@ class _FlashcardPageState extends State<FlashcardPage>
                               setState(() => loading = true);
 
                               try {
-                                final flashcardRef = FirebaseFirestore.instance
+                                final ref = FirebaseFirestore.instance
                                     .collection('flashcards')
                                     .doc(userId)
                                     .collection('userFlashcards')
                                     .doc();
 
-                                await flashcardRef.set({
+                                await ref.set({
                                   "title": title.trim(),
                                   "description": description.trim(),
                                   "vocabList": [],
@@ -359,17 +411,11 @@ class _FlashcardPageState extends State<FlashcardPage>
                                   SnackBar(
                                     content: const Text(
                                       "Tạo flashcard thành công!",
-                                      style: TextStyle(
-                                        color: Colors.orange,
-                                      ), // chữ cam đậm
+                                      style: TextStyle(color: Colors.orange),
                                     ),
-                                    backgroundColor:
-                                        Colors.orange.shade100, // nền cam nhẹ
-                                    behavior: SnackBarBehavior
-                                        .floating, // để nổi lên trên
-                                    margin: const EdgeInsets.all(
-                                      16,
-                                    ), // cách viền màn hình
+                                    backgroundColor: Colors.orange.shade100,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.all(16),
                                   ),
                                 );
                               } catch (e) {
@@ -398,6 +444,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                             ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
                 ],
               ),
