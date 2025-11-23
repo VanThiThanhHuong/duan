@@ -43,14 +43,36 @@ class _FlashcardQuizPageState extends State<FlashcardQuizPage> {
     return list;
   }
 
+  String generateComment(bool isCorrect) {
+    final random = Random();
+    final correctComments = [
+      "Tốt lắm! Bạn đang tiến bộ rất nhanh!",
+      "Xuất sắc! Tiếp tục duy trì nhé!",
+      "Trả lời đúng rồi, tuyệt vời!",
+      "Giỏi quá! Bạn nhớ từ vựng rất tốt!"
+    ];
+
+    final wrongComments = [
+      "Không sao, tiếp tục cố gắng nhé!",
+      "Sai rồi… nhưng bạn sẽ nhớ lâu hơn!",
+      "Đừng bỏ cuộc! Cố thêm chút nữa!",
+      "Sai một chút nhưng không vấn đề gì!"
+    ];
+
+    return isCorrect
+        ? correctComments[random.nextInt(correctComments.length)]
+        : wrongComments[random.nextInt(wrongComments.length)];
+  }
+
   void checkAnswer(String answer) {
     final correct = widget.vocabList[currentIndex];
+    final isCorrect = answer == correct.meaning;
 
     setState(() {
       selectedAnswer = answer;
       showResult = true;
-      feedback = answer == correct.meaning ? "✅ Chính xác!" : "❌ Sai!";
-      if (answer == correct.meaning) score++;
+      feedback = isCorrect ? "Đúng" : "Sai";
+      if (isCorrect) score++;
     });
 
     Future.delayed(const Duration(milliseconds: 1800), () {
@@ -196,21 +218,35 @@ class _FlashcardQuizPageState extends State<FlashcardQuizPage> {
               ),
             ),
 
-            // Feedback
-            if (feedback.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  feedback,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: feedback.startsWith("✅")
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                ),
-              ),
+            // Feedback mới: hiện hình + bình luận tự động
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: showResult
+                  ? Column(
+                      key: ValueKey(feedback),
+                      children: [
+                        Image.asset(
+                          feedback == "Đúng"
+                              ? "lib/image/dung.png"
+                              : "lib/image/sai.png",
+                          width: 250,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          generateComment(feedback == "Đúng"),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            color: feedback == "Đúng"
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),
