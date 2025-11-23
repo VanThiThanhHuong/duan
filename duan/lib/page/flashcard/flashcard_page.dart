@@ -85,6 +85,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                     final userFlashcards = snapshot.data!.docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       return FlashcardSet(
+                        id: doc.id,
                         title: data['title'] ?? 'Không có tiêu đề',
                         description: data['description'] ?? '',
                         vocabList:
@@ -143,7 +144,10 @@ class _FlashcardPageState extends State<FlashcardPage>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => FlashcardSetDetailPage(set: set),
+                  builder: (_) => FlashcardSetDetailPage(
+                    set: set,
+                    isPersonal: _tabController.index == 1,
+                  ),
                 ),
               );
             },
@@ -267,6 +271,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                   ),
                   const SizedBox(height: 20),
                   // Tiêu đề
+                  // Tiêu đề
                   TextField(
                     decoration: InputDecoration(
                       labelText: "Tiêu đề",
@@ -275,12 +280,25 @@ class _FlashcardPageState extends State<FlashcardPage>
                       fillColor: Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide.none, // bình thường không viền
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none, // bình thường không viền
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.orange.shade200, // viền khi focus
+                          width: 2,
+                        ),
                       ),
                     ),
                     onChanged: (value) => title = value,
                   ),
+
                   const SizedBox(height: 12),
+
                   // Mô tả
                   TextField(
                     decoration: InputDecoration(
@@ -292,9 +310,21 @@ class _FlashcardPageState extends State<FlashcardPage>
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.orange.shade200, // viền khi focus
+                          width: 2,
+                        ),
+                      ),
                     ),
                     onChanged: (value) => description = value,
                   ),
+
                   const SizedBox(height: 20),
                   // Lưu
                   SizedBox(

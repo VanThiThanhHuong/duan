@@ -1,6 +1,7 @@
 import 'vocabulary.dart';
 
 class FlashcardSet {
+  final String id;
   final String title;
   final String description;
   final List<Vocabulary> vocabList;
@@ -8,6 +9,7 @@ class FlashcardSet {
   final double progress;
 
   FlashcardSet({
+    this.id = '',
     required this.title,
     required this.description,
     required this.vocabList,
