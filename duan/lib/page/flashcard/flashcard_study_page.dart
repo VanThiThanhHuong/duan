@@ -23,6 +23,7 @@ class FlashcardStudyPage extends StatefulWidget {
 class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
   int currentIndex = 0;
   bool showMeaning = false;
+  bool isNext = true; // để xác định hướng slide
   final FlutterTts tts = FlutterTts();
 
   @override
@@ -55,7 +56,6 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
       }
     }
 
-    // Cập nhật EF
     ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
     if (ef < 1.3) ef = 1.3;
 
@@ -64,7 +64,6 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
     if (widget.isPersonal) {
-      // -------- Personal Flashcard --------
       final doc = FirebaseFirestore.instance
           .collection('flashcards')
           .doc(userId)
@@ -90,7 +89,6 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
 
       await doc.set({"vocabList": oldList}, SetOptions(merge: true));
     } else {
-      // -------- Community Flashcard --------
       final progressDoc = FirebaseFirestore.instance
           .collection('flashcard_sets')
           .doc(widget.setId)
@@ -115,6 +113,7 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
   void nextCard() {
     setState(() {
       if (currentIndex < widget.vocabList.length - 1) {
+        isNext = true;
         currentIndex++;
         showMeaning = false;
       } else {
@@ -128,6 +127,7 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
   void prevCard() {
     setState(() {
       if (currentIndex > 0) {
+        isNext = false;
         currentIndex--;
         showMeaning = false;
       }
@@ -152,46 +152,62 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // ------------------ FLASHCARD ------------------
-          GestureDetector(
-            onTap: () => setState(() => showMeaning = !showMeaning),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(24),
-              height: 270,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orange.shade200.withOpacity(0.5),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    showMeaning ? "${v.romaji}\n${v.meaning}" : v.word,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                final offsetAnimation = Tween<Offset>(
+                  begin: Offset(isNext ? 1.0 : -1.0, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOut,
+                ));
+                return SlideTransition(position: offsetAnimation, child: child);
+              },
+              child: GestureDetector(
+                key: ValueKey(currentIndex),
+                onTap: () => setState(() => showMeaning = !showMeaning),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(24),
+                  height: 270,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.shade200.withOpacity(0.5),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  IconButton(
-                    icon: Icon(Icons.volume_up_rounded,
-                        size: 40, color: Colors.orange.shade400),
-                    onPressed: () => speak(v.word),
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        showMeaning ? "${v.romaji}\n${v.meaning}" : v.word,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      IconButton(
+                        icon: Icon(Icons.volume_up_rounded,
+                            size: 40, color: Colors.orange.shade400),
+                        onPressed: () => speak(v.word),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 16),
 
           // ------------------ COUNTER ------------------
           Text(
@@ -205,13 +221,17 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
           const SizedBox(height: 20),
 
           // ------------------ SRS BUTTONS ------------------
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _srsButton("Khó", Colors.red, () => updateSRS(v, 2)),
-              _srsButton("Tạm ổn", Colors.orange, () => updateSRS(v, 4)),
-              _srsButton("Dễ", Colors.green, () => updateSRS(v, 5)),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _srsButton("Khó", Colors.red, () => updateSRS(v, 2)),
+                const SizedBox(width: 12),
+                _srsButton("Tạm ổn", Colors.orange, () => updateSRS(v, 4)),
+                const SizedBox(width: 12),
+                _srsButton("Dễ", Colors.green, () => updateSRS(v, 5)),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -222,7 +242,8 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
               _navButton(Icons.arrow_back, prevCard),
               _navButton(Icons.arrow_forward, nextCard),
             ],
-          )
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
