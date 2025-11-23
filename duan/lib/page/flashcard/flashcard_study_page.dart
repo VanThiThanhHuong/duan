@@ -169,12 +169,12 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
                 key: ValueKey(currentIndex),
                 onTap: () => setState(() => showMeaning = !showMeaning),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   padding: const EdgeInsets.all(24),
-                  height: 270,
+                  height: 500,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.orange.shade200.withOpacity(0.5),
@@ -209,17 +209,6 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
           ),
           const SizedBox(height: 16),
 
-          // ------------------ COUNTER ------------------
-          Text(
-            "${currentIndex + 1} / ${widget.vocabList.length}",
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 20),
-
           // ------------------ SRS BUTTONS ------------------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -234,7 +223,26 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
             ),
           ),
           const SizedBox(height: 20),
-
+          // ================= INDICATOR DOTS =================
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.vocabList.length,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: i == currentIndex ? 14 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: i == currentIndex
+                      ? Colors.orange.shade400
+                      : Colors.orange.shade200,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           // ------------------ NAV BUTTONS ------------------
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -243,7 +251,7 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
               _navButton(Icons.arrow_forward, nextCard),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 25),
         ],
       ),
     );
@@ -252,20 +260,23 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
   // ---------- UI Helper Buttons ----------
   Widget _srsButton(String label, Color color, VoidCallback onTap) {
     return Expanded(
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
       ),
@@ -273,16 +284,24 @@ class _FlashcardStudyPageState extends State<FlashcardStudyPage> {
   }
 
   Widget _navButton(IconData icon, VoidCallback onTap) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.orange.shade300,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.orange.shade300,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.shade200,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        child: Icon(icon, color: Colors.white, size: 30),
       ),
-      child: Icon(icon, color: Colors.white),
     );
   }
 }
